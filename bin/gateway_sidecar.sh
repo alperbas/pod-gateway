@@ -54,6 +54,15 @@ cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
 EOF
 fi
 
+if [ ! -z "${DNSMASQ_UPSTREAM_IPS}" ]; then
+for upstream_ip in $DNSMASQ_UPSTREAM_IPS; do
+cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+  # Set manual dns upstream IPs
+  server=${upstream_ip}
+EOF
+done
+fi
+
 for local_cidr in $DNS_LOCAL_CIDRS; do
   cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
   # Send ${local_cidr} DNS queries to the K8S DNS server
