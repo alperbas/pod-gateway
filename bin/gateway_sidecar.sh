@@ -14,9 +14,10 @@ if [ ! -f /etc/resolv.conf.org ]; then
   echo "/etc/resolv.conf.org written"
 fi
 
-#Get K8S DNS
-K8S_DNS=$(grep nameserver /etc/resolv.conf.org | cut -d' ' -f2)
-
+# Get K8S DNS if not provided from settings
+if [ -z "$K8S_DNS" ]; then
+  K8S_DNS=$(grep nameserver /etc/resolv.conf.org | cut -d' ' -f2)
+fi
 
 cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
 # DHCP server settings
@@ -51,6 +52,15 @@ cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
   conf-file=/usr/share/dnsmasq/trust-anchors.conf
   dnssec
 EOF
+fi
+
+if [ ! -z "${DNSMASQ_UPSTREAM_IPS}" ]; then
+for upstream_ip in $DNSMASQ_UPSTREAM_IPS; do
+cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+  # Set manual dns upstream IPs
+  server=${upstream_ip}
+EOF
+done
 fi
 
 for local_cidr in $DNS_LOCAL_CIDRS; do
