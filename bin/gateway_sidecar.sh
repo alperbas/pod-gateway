@@ -40,33 +40,48 @@ log-facility=-
 # Clear DNS cache on reload
 clear-on-reload
 
+EOF
+
+if [ -z "${DNSMASQ_RESOLVE_CONF}" ] || [ "${DNSMASQ_RESOLVE_CONF}" == "true" ]; then
+  cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
 # /etc/resolv.conf cannot be monitored by dnsmasq since it is in a different file system
 # and dnsmasq monitors directories only
 # copy_resolv.sh is used to copy the file on changes
 resolv-file=${RESOLV_CONF_COPY}
+
 EOF
+else
+  cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+# Do not read resolv file
+no-resolv
+
+EOF
+fi
 
 if [[ ${GATEWAY_ENABLE_DNSSEC} == true ]]; then
 cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
-  # Enable DNSSEC validation and caching
-  conf-file=/usr/share/dnsmasq/trust-anchors.conf
-  dnssec
+# Enable DNSSEC validation and caching
+conf-file=/usr/share/dnsmasq/trust-anchors.conf
+dnssec
+
 EOF
 fi
 
 if [ ! -z "${DNSMASQ_UPSTREAM_IPS}" ]; then
 for upstream_ip in $DNSMASQ_UPSTREAM_IPS; do
-cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
-  # Set manual dns upstream IPs
-  server=${upstream_ip}
+  cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+# Set manual dns upstream IPs
+server=${upstream_ip}
+
 EOF
 done
 fi
 
 for local_cidr in $DNS_LOCAL_CIDRS; do
   cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
-  # Send ${local_cidr} DNS queries to the K8S DNS server
-  server=/${local_cidr}/${K8S_DNS}
+# Send ${local_cidr} DNS queries to the K8S DNS server
+server=/${local_cidr}/${K8S_DNS}
+
 EOF
 done
 
