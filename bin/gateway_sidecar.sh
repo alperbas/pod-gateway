@@ -81,7 +81,7 @@ for local_cidr in $DNS_LOCAL_CIDRS; do
   cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
 # Send ${local_cidr} DNS queries to the K8S DNS server
 server=/${local_cidr}/${K8S_DNS}
-
+server=/svc/${K8S_DNS}
 EOF
 done
 
